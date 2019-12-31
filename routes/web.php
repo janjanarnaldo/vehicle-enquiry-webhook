@@ -14,3 +14,8 @@
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
+
+/* Twilio webhooks */
+$router->post('/enquiry/store', 'EnquiryController@store');
+
+$router->post('/enquiry/outbound/{enquiryIdentifier}', 'EnquiryController@outboundCall');

@@ -17,8 +17,10 @@ class CreateEnquiriesTable extends Migration
             $table->bigIncrements('id');
             $table->string('identifier');
             $table->integer('vehicle_id');
+            $table->string('sales_person_name');
+            $table->string('sales_person_mobile');
             $table->string('name');
-            $table->string('telephone');
+            $table->string('mobile');
             $table->string('email');
             $table->string('enquiry');
             $table->timestamps();
