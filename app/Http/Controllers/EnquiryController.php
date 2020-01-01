@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
+use Twilio\Twiml;
+
 use App\Twilio;
 use App\Enquiry;
-use Illuminate\Http\Request;
 
 const SALES_PERSON_NAME = 'sales_person_name';
 const SALES_PERSON_MOBILE = 'sales_person_mobile';
@@ -16,7 +18,7 @@ const ENQUIRY = 'enquiry';
 
 class EnquiryController extends Controller
 {
-  public function store(Request $request)
+  public function store(Request $request, Twilio $twilio)
   {
     $this->validate($request, $this->rules());
 
@@ -31,7 +33,11 @@ class EnquiryController extends Controller
     ]));
 
     if ($request->notify_seller) {
-      $this->dispatchPhoneCallNotification($enquiry->identifier, new Twilio);
+      $host = config('app.url');
+      $twilio->notifyPhoneCall(
+        $enquiry->sales_person_mobile,
+        "$host/enquiry/outbound/$enquiry->identifier"
+      );
     };
 
     $result = [
@@ -41,15 +47,67 @@ class EnquiryController extends Controller
     return response()->json($result);
   }
 
-  public function outboundCall($enquiryIdentifier, Twilio $twilio)
+  public function outboundCall($enquiryIdentifier)
   {
     $enquiry = Enquiry::whereIdentifier($enquiryIdentifier)->firstOrFail();
 
-    $message = "You have an enquiry from $enquiry->name for your vehicle id $enquiry->vehicle_id. This is his or her enquiry $enquiry->enquiry. Press 1 to call the customer, otherwise drop this call.";
+    $message = "You have an enquiry from $enquiry->name for your vehicle id $enquiry->vehicle_id. This is his or her enquiry $enquiry->enquiry.";
 
-    $response = $twilio->handleOutboundCall($enquiry->sales_person_mobile, $message);
+    $host = config('app.url');
 
+    $response = new TwiML();
+
+    try {
+      $response->dial($enquiry->sales_person_mobile);
+      $response->say($message);
+
+      $gather = $response->gather([
+        'numDigits' => 1,
+        'action' => "$host/enquiry/outbound/$enquiryIdentifier/gather",
+      ]);
+
+      $gather->say('Press 1 to call the customer.');
+
+      // a moment of silence
+      $response->say("Oops, you didn't press anything. Call ending.");
+  
+      return response($response, 200)->header('Content-Type', 'text/xml');
+    } catch (Exception $e) {
+      return $e;
+    }
+  }
+
+  public function outboundCallGather($enquiryIdentifier, Request $request)
+  {
+    $response = new TwiML();
+
+    $selectedOption = $request->input('Digits');
+
+    if ($selectedOption == 1) {
+      $enquiry = Enquiry::whereIdentifier($enquiryIdentifier)->firstOrFail();
+
+      $response->say("You'll be connected shortly to the customer");
+      $response->dial($enquiry->mobile);
+
+      return $response;
+    }
+
+    $response->say('Invalid input. Hanging up.');
+    $response->hangup();
     return $response;
+  }
+
+  protected function rules()
+  {
+    return [
+      SALES_PERSON_NAME => 'required',
+      SALES_PERSON_MOBILE => 'required',
+      VEHICLE_ID => 'required',
+      NAME => 'required',
+      MOBILE => 'required',
+      EMAIL => 'required',
+      ENQUIRY => 'required',
+    ];
   }
 
   // for testing only, but ready to use
@@ -67,34 +125,5 @@ class EnquiryController extends Controller
     ];
 
     return response()->json($result);
-  }
-
-  private function dispatchPhoneCallNotification($enquiryIdentifier, Twilio $twilio)
-  {
-    $enquiry = Enquiry::whereIdentifier($enquiryIdentifier)->firstOrFail();
-
-    $response = $twilio->notifyPhoneCall(
-      $enquiry->sales_person_mobile,
-      $enquiryIdentifier
-    );
-
-    $result = [
-      'message' => $response['message']
-    ];
-
-    return response()->json($result);
-  }
-
-  protected function rules()
-  {
-    return [
-      SALES_PERSON_NAME => 'required',
-      SALES_PERSON_MOBILE => 'required',
-      VEHICLE_ID => 'required',
-      NAME => 'required',
-      MOBILE => 'required',
-      EMAIL => 'required',
-      ENQUIRY => 'required',
-    ];
   }
 }
