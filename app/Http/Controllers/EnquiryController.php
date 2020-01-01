@@ -51,7 +51,7 @@ class EnquiryController extends Controller
   {
     $enquiry = Enquiry::whereIdentifier($enquiryIdentifier)->firstOrFail();
 
-    $message = "You have an enquiry from $enquiry->name for your vehicle id $enquiry->vehicle_id. This is his or her enquiry $enquiry->enquiry.";
+    $message = "You have an enquiry from $enquiry->name for your vehicle id $enquiry->vehicle_id. This is his or her enquiry. $enquiry->enquiry.";
 
     $host = config('app.url');
 
