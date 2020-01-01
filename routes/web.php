@@ -21,3 +21,5 @@ $router->post('/enquiry/store', 'EnquiryController@store');
 $router->post('/enquiry/outbound/{enquiryIdentifier}', 'EnquiryController@outboundCall');
 
 $router->post('/enquiry/outbound/{enquiryIdentifier}/gather', 'EnquiryController@outboundCallGather');
+
+$router->post('/enquiry/outbound/{enquiryIdentifier}/record', 'EnquiryController@outboundCallRecord');

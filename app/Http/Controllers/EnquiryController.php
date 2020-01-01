@@ -15,6 +15,7 @@ const NAME = 'name';
 const MOBILE = 'mobile';
 const EMAIL = 'email';
 const ENQUIRY = 'enquiry';
+const RECORDING_URL = 'recording_url';
 
 class EnquiryController extends Controller
 {
@@ -34,14 +35,18 @@ class EnquiryController extends Controller
 
     if ($request->notify_seller) {
       $host = config('app.url');
-      $twilio->notifyPhoneCall(
-        $enquiry->sales_person_mobile,
-        "$host/enquiry/outbound/$enquiry->identifier"
+      $params = array(
+        "number" => $enquiry->sales_person_mobile,
+        "twiMLUrl" => "$host/enquiry/outbound/$enquiry->identifier",
+        "isRecord" => true,
+        "recordingStatusCallbackUrl" => "$host/enquiry/outbound/$enquiry->identifier/record",
       );
+
+      $call = $twilio->notifyPhoneCall($params);
     };
 
     $result = [
-      'message' => 'Enquiry has been created successfully',
+      'message' => $call ? 'Enquiry has been created successfully.' : 'Call failed.',
     ];
 
     return response()->json($result);
@@ -89,15 +94,26 @@ class EnquiryController extends Controller
       $response->say("You'll be connected shortly to the customer");
       $response->dial($enquiry->mobile);
 
-      // if the customer doesn't pickup, hung up or network is busy
-      $response->say('The customer you have dialed is either unattended or out of coverage area. Please try again later.');
-
       return $response;
     }
 
     $response->say('Invalid input. Hanging up.');
     $response->hangup();
     return $response;
+  }
+
+  public function outboundCallRecord($enquiryIdentifier, Request $request)
+  {
+    $enquiry = Enquiry::whereIdentifier($enquiryIdentifier)->firstOrFail();
+
+    $enquiry->recording_url = $request->RecordingUrl;
+    $enquiry->save();
+
+    $result = [
+      'message' => 'Recording has been saved successfully.',
+    ];
+
+    return response()->json($result);
   }
 
   protected function rules()

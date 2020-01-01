@@ -52,17 +52,25 @@ class Twilio
     }
   }
 
-  public function notifyPhoneCall($number, $twiMLUrl)
+  public function notifyPhoneCall($args)
   {
+    $number = $args['number'];
+    $twiMLUrl =  $args['twiMLUrl'];
+    $isRecord =  $args['isRecord'];
+    $recordingStatusCallbackUrl = $args['recordingStatusCallbackUrl'];
+
+    $createCallOtherParams = $isRecord ? array(
+      "url" => $twiMLUrl,
+      "record" => $isRecord,
+      "recordingStatusCallback" => $recordingStatusCallbackUrl,
+    ) : array("url" => $twiMLUrl);
+
     try {
-      $this->client->calls->create(
+      return $this->client->calls->create(
         $number,
         $this->number,  
-        array(
-          "url" => $twiMLUrl,
-        )
+        $createCallOtherParams,
       );
-      return array('message' => 'Incoming Call!');
     } catch (Exception $e) {
       return $e;
     }
