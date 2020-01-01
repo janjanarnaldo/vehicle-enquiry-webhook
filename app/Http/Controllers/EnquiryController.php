@@ -89,6 +89,9 @@ class EnquiryController extends Controller
       $response->say("You'll be connected shortly to the customer");
       $response->dial($enquiry->mobile);
 
+      // if the customer doesn't pickup, hung up or network is busy
+      $response->say('The customer you have dialed is either unattended or out of coverage area. Please try again later.');
+
       return $response;
     }
 
