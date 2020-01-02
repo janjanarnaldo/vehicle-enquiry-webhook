@@ -32,7 +32,5 @@ $router->group(
         $router->post('/outbound/{enquiryIdentifier}/gather', 'EnquiryController@outboundCallGather');
         
         $router->post('/outbound/{enquiryIdentifier}/record', 'EnquiryController@outboundCallRecord');
-        
-        $router->get('/test', 'EnquiryController@test');
     }
 );
