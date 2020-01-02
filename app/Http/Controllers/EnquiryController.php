@@ -58,10 +58,10 @@ class EnquiryController extends Controller
   }
 
   public function dispatchNotifySeller($enquiryIdentifier, Twilio $twilio)
-  {    
+  {
     try {
       $enquiry = Enquiry::whereIdentifier($enquiryIdentifier)->firstOrFail();
-      $host = config('app.url');
+      $host = env('APP_URL');
       $params = array(
         "number" => $enquiry->sales_person_mobile,
         "twiMLUrl" => "$host/api/v1/enquiry/outbound/$enquiry->identifier",
@@ -88,7 +88,7 @@ class EnquiryController extends Controller
 
     $message = "You have an enquiry from $enquiry->name for your vehicle id $enquiry->vehicle_id. This is his or her enquiry. $enquiry->enquiry.";
 
-    $host = config('app.url');
+    $host = env('APP_URL');
 
     $response = new TwiML();
 
