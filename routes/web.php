@@ -24,6 +24,8 @@ $router->group(
         $router->get('/', 'EnquiryController@list');
 
         $router->post('/store', 'EnquiryController@store');
+
+        $router->post('/call/{enquiryIdentifier}', 'EnquiryController@dispatchNotifySeller');
         
         $router->post('/outbound/{enquiryIdentifier}', 'EnquiryController@outboundCall');
         

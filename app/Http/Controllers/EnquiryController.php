@@ -41,16 +41,8 @@ class EnquiryController extends Controller
         EMAIL,
         ENQUIRY,
       ]));
-  
-      $host = config('app.url');
-      $params = array(
-        "number" => $enquiry->sales_person_mobile,
-        "twiMLUrl" => "$host/api/v1/enquiry/outbound/$enquiry->identifier",
-        "isRecord" => true,
-        "recordingStatusCallbackUrl" => "$host/api/v1/enquiry/outbound/$enquiry->identifier/record",
-      );
-
-      $call = $twilio->notifyPhoneCall($params);
+      
+      $call = $this->dispatchNotifySeller($enquiry->identifier, $twilio);
   
       $result = [
         'message' => $call ? 'Enquiry has been created successfully.' : 'Call failed.',
@@ -63,6 +55,31 @@ class EnquiryController extends Controller
       ];
       return response($result, 500);
     }
+  }
+
+  public function dispatchNotifySeller($enquiryIdentifier, Twilio $twilio)
+  {    
+    try {
+      $enquiry = Enquiry::whereIdentifier($enquiryIdentifier)->firstOrFail();
+      $host = config('app.url');
+      $params = array(
+        "number" => $enquiry->sales_person_mobile,
+        "twiMLUrl" => "$host/api/v1/enquiry/outbound/$enquiry->identifier",
+        "isRecord" => true,
+        "recordingStatusCallbackUrl" => "$host/api/v1/enquiry/outbound/$enquiry->identifier/record",
+      );
+  
+      $call = $twilio->notifyPhoneCall($params);
+  
+      $result = [
+        'message' => $call ? 'Incoming call.' : 'Call failed.',
+      ];
+  
+      return response()->json($result);
+    } catch (Exception $e) {
+      return $e;
+    }
+
   }
 
   public function outboundCall($enquiryIdentifier)
