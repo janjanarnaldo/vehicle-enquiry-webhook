@@ -19,3 +19,9 @@ If you discover a security vulnerability within Lumen, please send an e-mail to 
 ## License
 
 The Lumen framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Integrate with Vehicle Enquiry Click
+
+To integrate with [Vehicle Enquiry Click UI](https://github.com/janjanarnaldo/vehicle-enquiry-click), you will need to create a `.env` file under the root folder and update the following properties accordingly: `APP_URL`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_SMS_FROM`. Note that the `APP_URL` is your public url that will be used by twilio, and the others as well. APP_URL format: `http://<host>`.
+
+Also, please don't forget to update the `DB_*` environment variables before running your migrations. Refer to Lumen docs if neccessary.
