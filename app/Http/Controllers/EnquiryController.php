@@ -36,17 +36,15 @@ class EnquiryController extends Controller
         ENQUIRY,
       ]));
   
-      if ($request->notify_seller) {
-        $host = config('app.url');
-        $params = array(
-          "number" => $enquiry->sales_person_mobile,
-          "twiMLUrl" => "$host/enquiry/outbound/$enquiry->identifier",
-          "isRecord" => true,
-          "recordingStatusCallbackUrl" => "$host/enquiry/outbound/$enquiry->identifier/record",
-        );
-  
-        $call = $twilio->notifyPhoneCall($params);
-      };
+      $host = config('app.url');
+      $params = array(
+        "number" => $enquiry->sales_person_mobile,
+        "twiMLUrl" => "$host/api/v1/enquiry/outbound/$enquiry->identifier",
+        "isRecord" => true,
+        "recordingStatusCallbackUrl" => "$host/api/v1/enquiry/outbound/$enquiry->identifier/record",
+      );
+
+      $call = $twilio->notifyPhoneCall($params);
   
       $result = [
         'message' => $call ? 'Enquiry has been created successfully.' : 'Call failed.',
@@ -77,7 +75,7 @@ class EnquiryController extends Controller
 
       $gather = $response->gather([
         'numDigits' => 1,
-        'action' => "$host/enquiry/outbound/$enquiryIdentifier/gather",
+        'action' => "$host/api/v1/enquiry/outbound/$enquiryIdentifier/gather",
       ]);
 
       $gather->say('Press 1 to call the customer.');
