@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
+
 use Twilio\Twiml;
 
 use App\Twilio;
@@ -21,35 +23,42 @@ class EnquiryController extends Controller
 {
   public function store(Request $request, Twilio $twilio)
   {
-    $this->validate($request, $this->rules());
-
-    $enquiry = Enquiry::create($request->only([
-      SALES_PERSON_NAME,
-      SALES_PERSON_MOBILE,
-      VEHICLE_ID,
-      NAME,
-      MOBILE,
-      EMAIL,
-      ENQUIRY,
-    ]));
-
-    if ($request->notify_seller) {
-      $host = config('app.url');
-      $params = array(
-        "number" => $enquiry->sales_person_mobile,
-        "twiMLUrl" => "$host/enquiry/outbound/$enquiry->identifier",
-        "isRecord" => true,
-        "recordingStatusCallbackUrl" => "$host/enquiry/outbound/$enquiry->identifier/record",
-      );
-
-      $call = $twilio->notifyPhoneCall($params);
-    };
-
-    $result = [
-      'message' => $call ? 'Enquiry has been created successfully.' : 'Call failed.',
-    ];
-
-    return response()->json($result);
+    try {
+      $this->validate($request, $this->rules());
+  
+      $enquiry = Enquiry::create($request->only([
+        SALES_PERSON_NAME,
+        SALES_PERSON_MOBILE,
+        VEHICLE_ID,
+        NAME,
+        MOBILE,
+        EMAIL,
+        ENQUIRY,
+      ]));
+  
+      if ($request->notify_seller) {
+        $host = config('app.url');
+        $params = array(
+          "number" => $enquiry->sales_person_mobile,
+          "twiMLUrl" => "$host/enquiry/outbound/$enquiry->identifier",
+          "isRecord" => true,
+          "recordingStatusCallbackUrl" => "$host/enquiry/outbound/$enquiry->identifier/record",
+        );
+  
+        $call = $twilio->notifyPhoneCall($params);
+      };
+  
+      $result = [
+        'message' => $call ? 'Enquiry has been created successfully.' : 'Call failed.',
+      ];
+  
+      return response()->json($result);
+    } catch (QueryException $e) {
+      $result = [
+        'message' => $e->getMessage(),
+      ];
+      return response($result, 500);
+    }
   }
 
   public function outboundCall($enquiryIdentifier)
@@ -86,34 +95,45 @@ class EnquiryController extends Controller
   {
     $response = new TwiML();
 
-    $selectedOption = $request->input('Digits');
-
-    if ($selectedOption == 1) {
-      $enquiry = Enquiry::whereIdentifier($enquiryIdentifier)->firstOrFail();
-
-      $response->say("You'll be connected shortly to the customer");
-      $response->dial($enquiry->mobile);
-
+    try {
+      $selectedOption = $request->input('Digits');
+  
+      if ($selectedOption == 1) {
+        $enquiry = Enquiry::whereIdentifier($enquiryIdentifier)->firstOrFail();
+  
+        $response->say("You'll be connected shortly to the customer");
+        $response->dial($enquiry->mobile);
+  
+        return $response;
+      }
+  
+      $response->say('Invalid input. Hanging up.');
+      $response->hangup();
       return $response;
+    } catch (Exception $e) {
+      return $e;
     }
-
-    $response->say('Invalid input. Hanging up.');
-    $response->hangup();
-    return $response;
   }
 
   public function outboundCallRecord($enquiryIdentifier, Request $request)
   {
-    $enquiry = Enquiry::whereIdentifier($enquiryIdentifier)->firstOrFail();
-
-    $enquiry->recording_url = $request->RecordingUrl;
-    $enquiry->save();
-
-    $result = [
-      'message' => 'Recording has been saved successfully.',
-    ];
-
-    return response()->json($result);
+    try {
+      $enquiry = Enquiry::whereIdentifier($enquiryIdentifier)->firstOrFail();
+  
+      $enquiry->recording_url = $request->RecordingUrl;
+      $enquiry->save();
+  
+      $result = [
+        'message' => 'Recording has been saved successfully.',
+      ];
+  
+      return response()->json($result);
+    } catch (QueryException $e) {
+      $result = [
+        'message' => $e->getMessage(),
+      ];
+      return response($result, 500);
+    }
   }
 
   protected function rules()
@@ -144,5 +164,11 @@ class EnquiryController extends Controller
     ];
 
     return response()->json($result);
+  }
+
+  public function test() {
+    return response()->json([
+      'message' => 'Test'
+    ]);
   }
 }

@@ -57,6 +57,10 @@ $app->singleton(
 |
 */
 
+$app->middleware([
+    App\Http\Middleware\CorsMiddleware::class
+]);
+
 // $app->middleware([
 //     App\Http\Middleware\ExampleMiddleware::class
 // ]);

@@ -16,10 +16,19 @@ $router->get('/', function () use ($router) {
 });
 
 /* Twilio webhooks */
-$router->post('/enquiry/store', 'EnquiryController@store');
-
-$router->post('/enquiry/outbound/{enquiryIdentifier}', 'EnquiryController@outboundCall');
-
-$router->post('/enquiry/outbound/{enquiryIdentifier}/gather', 'EnquiryController@outboundCallGather');
-
-$router->post('/enquiry/outbound/{enquiryIdentifier}/record', 'EnquiryController@outboundCallRecord');
+$router->group(
+    [
+        "prefix" => "api/v1/enquiry",
+    ],
+    function () use ($router) {
+        $router->post('/store', 'EnquiryController@store');
+        
+        $router->post('/outbound/{enquiryIdentifier}', 'EnquiryController@outboundCall');
+        
+        $router->post('/outbound/{enquiryIdentifier}/gather', 'EnquiryController@outboundCallGather');
+        
+        $router->post('/outbound/{enquiryIdentifier}/record', 'EnquiryController@outboundCallRecord');
+        
+        $router->get('/test', 'EnquiryController@test');
+    }
+);
