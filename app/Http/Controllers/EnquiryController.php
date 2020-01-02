@@ -21,6 +21,12 @@ const RECORDING_URL = 'recording_url';
 
 class EnquiryController extends Controller
 {
+  public function list()
+  {
+    $enquiries = Enquiry::all();
+    return response()->json($enquiries);
+  }
+
   public function store(Request $request, Twilio $twilio)
   {
     try {

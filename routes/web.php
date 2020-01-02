@@ -21,6 +21,8 @@ $router->group(
         "prefix" => "api/v1/enquiry",
     ],
     function () use ($router) {
+        $router->get('/', 'EnquiryController@list');
+
         $router->post('/store', 'EnquiryController@store');
         
         $router->post('/outbound/{enquiryIdentifier}', 'EnquiryController@outboundCall');
