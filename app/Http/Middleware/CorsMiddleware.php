@@ -7,13 +7,8 @@ class CorsMiddleware
 {
   public function handle($request, \Closure $next)
   {
-    //Intercepts OPTIONS requests
-		if($request->isMethod('OPTIONS')) {
-			$response = response('', 200);
-		} else {
-			// Pass the request to the next middleware
-			$response = $next($request);
-    }
+    //Intercepts OPTIONS requests or Pass the request to the next middleware
+    $response = $request->isMethod('OPTIONS') ? response('', 200) : $next($request);
 
     $response->header('Access-Control-Allow-Headers', $request->header('Access-Control-Request-Headers'));
     $response->header('Access-Control-Allow-Method', 'POST, GET, OPTIONS, PUT, DELETE');
